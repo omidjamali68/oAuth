@@ -8,5 +8,7 @@ namespace Auth.Application.Services.Contracts
         Task<IdentityVerificationCode?> GetByCode(uint code);
         Task<int> GetTodaySendCount(string phoneNumber);
         Task Add(IdentityVerificationCode identityVerificationCode);
+        Task<List<IdentityVerificationCode>> GetAll();
+        void DeleteRange(IEnumerable<IdentityVerificationCode> expiredCodes);
     }
 }

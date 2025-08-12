@@ -92,7 +92,7 @@ namespace Auth.Application.Services
                 return result;
             }            
 
-            var token = _jwtTokenGenerator.GenerateToken(user);
+            var token = await _jwtTokenGenerator.GenerateToken(user);
             result.Successful($"{user.FullName} خوش آمدید", new { Token = token });
 
             await _loginLoggerService.LogLoginAsync(
@@ -131,7 +131,7 @@ namespace Auth.Application.Services
             await _loginLoggerService.LogLoginAsync(
                     user.UserName, dto.UserIp, dto.UserAgent, LoginStatus.Success, LoginType.Sms, LoginSource.Web, $"{user.FullName} خوش آمدید");
 
-            var token = _jwtTokenGenerator.GenerateToken(user);
+            var token = await _jwtTokenGenerator.GenerateToken(user);
             return result.Successful($"{user.FullName} خوش آمدید", new { Token = token });
         }
 
@@ -207,6 +207,38 @@ namespace Auth.Application.Services
             return result.Successful(new {IsUserRegistered = isUserRegistered});
         }
 
+        public async Task<ResponseDto> DeleteExpiredVerificationCodes(int delayInMinute)
+        {
+            var result = ResponseDto.Create();
+            try
+            {
+                if (delayInMinute <= 0)
+                {
+                    return result.CreateError("مقدار بازه زمانی را وارد کنید");
+                }
+
+                if (delayInMinute > 0 && delayInMinute <= 5)
+                {
+                    return result.CreateError("مقدار بازه زمانی باید بیشتر از 5 دقیقه باشد");
+                }
+
+                var codes = await _verificationCodeService.GetAll();
+
+                var expiredCodes = codes.Where(x => x.VerificationDate.AddMinutes(delayInMinute) < DateTime.Now)
+                    .ToList();
+
+                _verificationCodeService.DeleteRange(expiredCodes);
+
+                await _unitOfWork.CompleteAsync();
+
+                return result.Successful(new { DeletedCodeCount = expiredCodes.Count() });
+            }
+            catch (Exception ex)
+            {
+                return result.CreateError(ex.Message);
+            }            
+        }
+
         private async Task SaveApplicationUserVerificationCode(string phoneNumber,
             uint verificationCode, string result)
         {
@@ -221,6 +253,5 @@ namespace Auth.Application.Services
 
             await _unitOfWork.CompleteAsync();
         }        
-
     }
 }

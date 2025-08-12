@@ -11,12 +11,15 @@ namespace Auth.Api.Controllers
         private readonly IAuthService _authService;
         private readonly IRegisterUserService _registerUserService;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IConfiguration _configuration;
 
-        public AuthApiController(IAuthService authService, IHttpContextAccessor httpContextAccessor, IRegisterUserService registerUserService)
+        public AuthApiController(
+            IAuthService authService, IHttpContextAccessor httpContextAccessor, IRegisterUserService registerUserService, IConfiguration configuration)
         {
             _authService = authService;
             _httpContextAccessor = httpContextAccessor;
             _registerUserService = registerUserService;
+            _configuration = configuration;
         }
 
         [HttpPost("register")]
@@ -104,6 +107,22 @@ namespace Auth.Api.Controllers
         public async Task<IActionResult> AssignRole([FromBody] AssignRoleDto dto)
         {
             var result = await _authService.AssignRole(dto.UserName, dto.RoleName);
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+        
+        [HttpDelete("expired-verification-codes")]
+        public async Task<IActionResult> DeleteExpiredVerificationCodes(DeleteExpiredVerificationCodeDto dto)
+        {
+            if (Request.Headers["X-App-Secret"] != _configuration.GetValue<string>("ApiSettings:InternalApiSecret"))
+                return Unauthorized();
+
+            var result = await _authService.DeleteExpiredVerificationCodes(dto.DelayInMinute);
 
             if (!result.IsSuccess)
             {

@@ -23,6 +23,11 @@ namespace Auth.Application.Services
             return await _verificationCodeRepository.GetByCode(code); 
         }
 
+        public async Task<List<IdentityVerificationCode>> GetAll()
+        {
+            return await _verificationCodeRepository.GetAll();
+        }
+
         public async Task<int> GetTodaySendCount(string phoneNumber)
         {
             return await _verificationCodeRepository.GetTodaySendCount(phoneNumber);
@@ -33,6 +38,9 @@ namespace Auth.Application.Services
             return await _verificationCodeRepository.GetUnusedCodFor(username);
         }
 
-
+        public void DeleteRange(IEnumerable<IdentityVerificationCode> expiredCodes)
+        {
+            _verificationCodeRepository.DeleteRange(expiredCodes);
+        }
     }
 }

@@ -24,6 +24,15 @@ namespace Auth.Infrastructure.Repositories
                                     x => x.VerificationCode == code);
         }
 
+        public async Task<List<IdentityVerificationCode>> GetAll()
+        {
+            var result = new List<IdentityVerificationCode>();
+
+            result = await _db.VerificationCodes.ToListAsync();
+
+            return result;
+        }
+
         public async Task<int> GetTodaySendCount(string phoneNumber)
         {
             return await _db.VerificationCodes.CountAsync( 
@@ -36,6 +45,11 @@ namespace Auth.Infrastructure.Repositories
                 .Where(_ => _.PhoneNumber == username && _.IsUsed == false)
                 .OrderByDescending(_ => _.VerificationDate)
                 .FirstOrDefaultAsync();
+        }
+
+        public void DeleteRange(IEnumerable<IdentityVerificationCode> expiredCodes)
+        {
+            _db.VerificationCodes.RemoveRange(expiredCodes);
         }
     }
 }

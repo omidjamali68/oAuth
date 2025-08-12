@@ -6,7 +6,9 @@ namespace Auth.Application.Repositories.Contracts
     {
         Task Add(IdentityVerificationCode identityVerificationCode);
         Task<IdentityVerificationCode?> GetByCode(uint code);
+        Task<List<IdentityVerificationCode>> GetAll();
         Task<int> GetTodaySendCount(string phoneNumber);
-        Task<IdentityVerificationCode?> GetUnusedCodFor(string username);        
+        Task<IdentityVerificationCode?> GetUnusedCodFor(string username);
+        void DeleteRange(IEnumerable<IdentityVerificationCode> expiredCodes);
     }
 }

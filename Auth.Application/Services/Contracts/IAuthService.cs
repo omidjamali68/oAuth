@@ -9,5 +9,6 @@ namespace Auth.Application.Services.Contracts
         Task<ResponseDto> ConfirmVerificationCode(ConfirmVerificationCodeDto dto);
         Task<ResponseDto> SendVerificationCode(SendVerificationCodeRequestDto dto);
         Task<ResponseDto> LoginBySms(LoginBySmsRequestDto dto);
+        Task<ResponseDto> DeleteExpiredVerificationCodes(int delayInMinute);
     }
 }

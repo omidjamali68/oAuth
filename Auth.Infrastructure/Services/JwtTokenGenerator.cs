@@ -1,6 +1,7 @@
 ﻿using Auth.Application.Services.Contracts;
 using Auth.Application.Settings;
 using Auth.Domain.Entities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -12,13 +13,15 @@ namespace Auth.Infrastructure.Services
     public class JwtTokenGenerator : IJwtTokenGenerator
     {
         private readonly JwtOptions _jwtOptions;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public JwtTokenGenerator(IOptions<JwtOptions> jwtOptions)
+        public JwtTokenGenerator(IOptions<JwtOptions> jwtOptions, UserManager<ApplicationUser> userManager)
         {
             _jwtOptions = jwtOptions.Value;
+            _userManager = userManager;
         }
 
-        public string GenerateToken(ApplicationUser applicationUser)
+        public async Task<string> GenerateToken(ApplicationUser applicationUser)
         {
             var key = Encoding.ASCII.GetBytes(_jwtOptions.Secret);
 
@@ -28,6 +31,12 @@ namespace Auth.Infrastructure.Services
                 new Claim(JwtRegisteredClaimNames.Name, applicationUser.FullName),
                 new Claim(ClaimTypes.NameIdentifier, applicationUser.UserName)
             };
+
+            var roles = await _userManager.GetRolesAsync(applicationUser);
+            foreach (var role in roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
