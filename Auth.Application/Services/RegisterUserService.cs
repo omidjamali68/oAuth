@@ -1,7 +1,6 @@
 ﻿using Auth.Application.Common;
 using Auth.Application.Dto;
 using Auth.Application.Services.Contracts;
-using Auth.Application.Settings;
 using Auth.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 
@@ -10,14 +9,17 @@ namespace Auth.Application.Services
     public class RegisterUserService : IRegisterUserService
     {
         private readonly IVerificationCodeService _verificationCodeService;
+        private readonly IAuthService _authService;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IUnitOfWork _unitOfWork;
 
-        public RegisterUserService(UserManager<ApplicationUser> userManager, IVerificationCodeService verificationCodeService, IUnitOfWork unitOfWork)
+        public RegisterUserService(
+            UserManager<ApplicationUser> userManager, IVerificationCodeService verificationCodeService, IUnitOfWork unitOfWork, IAuthService authService)
         {
             _userManager = userManager;
             _verificationCodeService = verificationCodeService;
             _unitOfWork = unitOfWork;
+            _authService = authService;
         }
 
         public async Task<ResponseDto> Register(RegisterRequestDto dto)
@@ -34,7 +36,7 @@ namespace Auth.Application.Services
                 return result.CreateError("شماره همراه باید به صورت 09120000000 وارد شود");
             }            
 
-            var confirmCodeResult = await ConfirmRegisteringVerificationCode(new ConfirmVerificationCodeDto
+            var confirmCodeResult = await _authService.ConfirmVerificationCode(new ConfirmVerificationCodeDto
             {
                 PhoneNumber = dto.UserName,
                 UserIp = dto.UserIp,
@@ -77,51 +79,7 @@ namespace Auth.Application.Services
             {
                 return result.CreateError(ex.Message);
             }
-        }        
-
-        private async Task<ResponseDto> ConfirmRegisteringVerificationCode(ConfirmVerificationCodeDto dto)
-        {
-            var result = ResponseDto.Create();
-
-            var userVerification = await _verificationCodeService.GetUnusedCodFor(dto.PhoneNumber);
-
-            if (userVerification == null)
-            {
-                result.CreateError("کد تایید برای این کاربر یافت نشد");
-                return result;
-            }
-
-            var expireTime = DateTime.Now.Subtract(new TimeSpan(0, Setting.EXPIRE_VERIFICATIONCODE_TIME_MINUTE, 0));
-
-            if (userVerification.VerificationDate < expireTime)
-            {
-                result.CreateError("کد تایید منقضی شده است");
-                return result;
-            }
-
-            if (userVerification.TryCount >= 5)
-            {
-                result.CreateError("تعداد تلاش‌های ناموفق بیش از حد مجاز است. لطفاً کد جدید دریافت کنید.");
-                return result;
-            }
-
-            userVerification.SentFromIP = dto.UserIp;
-            userVerification.TryCount += 1;
-
-            if (userVerification.VerificationCode != dto.VerificationCode)
-            {                
-                await _unitOfWork.CompleteAsync();
-                result.CreateError("کد تایید وارد شده صحیح نمی‌باشد");
-                return result;
-            }
-
-            userVerification.IsUsed = true;
-            userVerification.UsedAt = DateTime.Now;
-
-            await _unitOfWork.CompleteAsync();
-
-            return result.Successful();
-        }
+        }                
 
         private async Task UndoUsedVerificationCode(RegisterRequestDto dto)
         {

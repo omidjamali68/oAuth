@@ -26,8 +26,7 @@ namespace Auth.Application.Services
             IApplicationUserRepository userRepository,
             IloginLoggerService loginLoggerService,
             IVerificationCodeService verificationCodeService,
-            IUnitOfWork unitOfWork,
-            IRegisterUserService registerUserService)
+            IUnitOfWork unitOfWork)
         {
             _roleManager = roleManager;
             _userManager = userManager;
@@ -135,16 +134,29 @@ namespace Auth.Application.Services
             return result.Successful($"{user.FullName} خوش آمدید", new { Token = token });
         }
 
-        public async Task<ResponseDto> ConfirmVerificationCode(ConfirmVerificationCodeDto dto)
+        public async Task<ResponseDto> IssueToken(IssueTokenRequestDto dto)
         {
             var result = ResponseDto.Create();
 
-            var applicationUser = await _userManager.FindByNameAsync(dto.PhoneNumber);
-            if(applicationUser == null)
+            var user = await _userRepository.GetByUsername(dto.PhoneNumber);
+            if (user == null)
             {
-                result.CreateError("کاربر قبلا ثبت نام نکرده است");
+                result.CreateError("کاربری با این نام کاربر یافت نشد");
+                await _loginLoggerService.LogLoginAsync(
+                    dto.PhoneNumber, dto.UserIp, dto.UserAgent, LoginStatus.Failed, LoginType.Sms, LoginSource.Web, "کاربری با این نام کاربر یافت نشد");
                 return result;
-            }
+            }                        
+
+            await _loginLoggerService.LogLoginAsync(
+                    user.UserName, dto.UserIp, dto.UserAgent, LoginStatus.Success, LoginType.Sms, LoginSource.Web, $"{user.FullName} خوش آمدید");
+
+            var token = await _jwtTokenGenerator.GenerateToken(user);
+            return result.Successful($"{user.FullName} خوش آمدید", new { Token = token });
+        }
+
+        public async Task<ResponseDto> ConfirmVerificationCode(ConfirmVerificationCodeDto dto)
+        {
+            var result = ResponseDto.Create();            
 
             var userVerification = await _verificationCodeService.GetUnusedCodFor(dto.PhoneNumber);            
             if (userVerification == null)
@@ -153,7 +165,7 @@ namespace Auth.Application.Services
                 return result;
             }
 
-            userVerification.SentFromIP = dto.UserIp;
+            userVerification.SentFromIP = dto.UserIp ?? string.Empty;
             userVerification.TryCount += 1;
             await _unitOfWork.CompleteAsync();
 
@@ -177,7 +189,10 @@ namespace Auth.Application.Services
                 return result;
             }
 
-            applicationUser.PhoneNumberConfirmed = true;
+            var applicationUser = await _userManager.FindByNameAsync(dto.PhoneNumber);
+
+            if (applicationUser != null)
+                applicationUser.PhoneNumberConfirmed = true;
 
             userVerification.IsUsed = true;
             userVerification.UsedAt = DateTime.Now;

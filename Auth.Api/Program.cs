@@ -106,6 +106,16 @@ builder.Services
         };
     });
 
+builder.Services.Configure<IdentityOptions>(options =>
+{
+    options.Password.RequiredLength = 8;
+    options.Password.RequireNonAlphanumeric = false; // نیازی به @ و # و ... نباشه
+    options.Password.RequireUppercase = false;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireDigit = true;
+});
+
+
 builder.Services.AddAuthorization();
 
 var app = builder.Build();

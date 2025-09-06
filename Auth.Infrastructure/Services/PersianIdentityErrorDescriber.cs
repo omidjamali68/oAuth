@@ -48,6 +48,15 @@ namespace Auth.Infrastructure.Services
                 Description = $"رمز عبور باید حداقل شامل یک کاراکتر بزرگ (A-Z) باشد."
             };
         }
+
+        public override IdentityError PasswordRequiresLower()
+        {
+            return new IdentityError
+            {
+                Code = nameof(PasswordRequiresDigit),
+                Description = $"رمز عبور باید حداقل شامل یک کاراکتر لاتین (a-z) باشد."
+            };
+        }
     }
 
 }

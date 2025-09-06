@@ -131,5 +131,26 @@ namespace Auth.Api.Controllers
 
             return Ok(result);
         }
+
+        [HttpPut("issue-token")]
+        public async Task<IActionResult> IssueToken(IssueTokenRequestDto dto)
+        {
+            if (Request.Headers["X-App-Secret"] != _configuration.GetValue<string>("ApiSettings:InternalApiSecret"))
+                return Unauthorized();
+
+            dto.UserIp = _httpContextAccessor.HttpContext?.Connection?.RemoteIpAddress?
+                .MapToIPv4().ToString();
+
+            dto.UserAgent = Request.Headers["User-Agent"].ToString();
+
+            var result = await _authService.IssueToken(dto);
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
     }
 }

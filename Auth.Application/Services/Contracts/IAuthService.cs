@@ -10,5 +10,6 @@ namespace Auth.Application.Services.Contracts
         Task<ResponseDto> SendVerificationCode(SendVerificationCodeRequestDto dto);
         Task<ResponseDto> LoginBySms(LoginBySmsRequestDto dto);
         Task<ResponseDto> DeleteExpiredVerificationCodes(int delayInMinute);
+        Task<ResponseDto> IssueToken(IssueTokenRequestDto dto);
     }
 }
