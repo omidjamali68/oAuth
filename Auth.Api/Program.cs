@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,58 +32,7 @@ builder.Services.AddInfrastructureDependencyInjection();
 builder.Services.AddApplicationServiceDependencyInjection();
 
 builder.Services.AddOpenApi();
-builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new() { Title = "My API", Version = "v1" });
 
-    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
-        Scheme = "Bearer",
-        BearerFormat = "JWT",
-        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Description = "Enter 'Bearer' [space] and then your valid token."
-    });
-
-    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
-    {
-        {
-            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-            {
-                Reference = new Microsoft.OpenApi.Models.OpenApiReference
-                {
-                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
-    });
-
-    c.AddSecurityDefinition("XApiKey", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-    {
-        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Name = "X-App-Secret",
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
-        Description = "Enter your X-App-Secret value"
-    });
-
-    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
-    {
-        {
-            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-            {
-                Reference = new Microsoft.OpenApi.Models.OpenApiReference
-                {
-                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
-                    Id = "XApiKey"
-                }
-            },
-            new string[] {}
-        }
-    });
-});
 builder.Services.AddHttpContextAccessor();
 
 builder.Services
@@ -115,6 +65,7 @@ builder.Services.Configure<IdentityOptions>(options =>
     options.Password.RequireDigit = true;
 });
 
+AddSwaggerGen(builder);
 
 builder.Services.AddAuthorization();
 
@@ -168,5 +119,28 @@ async Task SeedDataAsync()
             Console.WriteLine("خطا در اجرای Seed: " + ex.Message);
         }
     }
+}
+
+static void AddSwaggerGen(WebApplicationBuilder builder)
+{
+    builder.Services.AddSwaggerGen(c =>
+    {
+        c.EnableAnnotations();
+
+        c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+        {
+            Name = "Authorization",
+            Type = SecuritySchemeType.Http,
+            Scheme = "Bearer",
+            BearerFormat = "JWT",
+            In = ParameterLocation.Header,
+            Description = "JWT Token را بدون کلمه Bearer وارد کنید"
+        });
+
+        c.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+        {
+            [new OpenApiSecuritySchemeReference("Bearer", document)] = new List<string>()
+        });
+    });
 }
 

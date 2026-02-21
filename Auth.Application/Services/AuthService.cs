@@ -213,7 +213,7 @@ namespace Auth.Application.Services
             }
 
             var code = string.Empty.RandomInt(6);
-            var smsResult = await _smsService.VerifySendAsync(dto.PhoneNumber, new List<SmsParams>() { new("cde", code) });
+            var smsResult = await _smsService.VerifySendAsync(dto.PhoneNumber, new List<SmsParams>() { new("code", code) });
 
             await SaveApplicationUserVerificationCode(dto.PhoneNumber, uint.Parse(code), smsResult.Message);
 
