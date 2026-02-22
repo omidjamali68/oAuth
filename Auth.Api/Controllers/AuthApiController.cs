@@ -1,5 +1,6 @@
 ﻿using Auth.Application.Dto;
 using Auth.Application.Services.Contracts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Auth.Api.Controllers
@@ -104,6 +105,7 @@ namespace Auth.Api.Controllers
         }
 
         [HttpPost("assign-role")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AssignRole([FromBody] AssignRoleDto dto)
         {
             var result = await _authService.AssignRole(dto.UserName, dto.RoleName);
