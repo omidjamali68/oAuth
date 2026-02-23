@@ -8,7 +8,6 @@ namespace Auth.Application.Dto
         [Required]
         public string UserName { get; set; }
         public string? Email { get; set; }
-        [Required]
         public string FullName { get; set; }
         [MaxLength(10)]
         public string? NationalCode { get; set; }

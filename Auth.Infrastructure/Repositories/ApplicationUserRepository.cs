@@ -13,6 +13,11 @@ namespace Auth.Infrastructure.Repositories
             _db = db;
         }
 
+        public async Task<List<ApplicationUser>?> GetAll()
+        {
+            return await _db.ApplicationUsers.ToListAsync();
+        }
+
         public async Task<ApplicationUser?> GetByUsername(string username)
         {
             return await _db.ApplicationUsers.FirstOrDefaultAsync(x => x.UserName.ToLower() == username.ToLower());

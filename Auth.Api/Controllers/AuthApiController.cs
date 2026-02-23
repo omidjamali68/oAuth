@@ -39,6 +39,22 @@ namespace Auth.Api.Controllers
             return Ok(result);
         }
 
+        [HttpPost("quick-register")]
+        public async Task<IActionResult> QuickRegister([FromBody] QuickRegisterDto dto)
+        {
+            dto.UserIp = _httpContextAccessor.HttpContext?.Connection?.RemoteIpAddress?
+                .MapToIPv4().ToString();
+
+            var result = await _registerUserService.QuickRegister(dto);
+
+            if (!result.IsSuccess) 
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+
         [HttpPut("verify-code")]
         public async Task<IActionResult> ConfirmVerificationCode(ConfirmVerificationCodeDto dto)
         {

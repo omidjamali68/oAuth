@@ -10,7 +10,7 @@ namespace Auth.Application.Services
     {
         private readonly IVerificationCodeService _verificationCodeService;
         private readonly IAuthService _authService;
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly UserManager<ApplicationUser> _userManager;        
         private readonly IUnitOfWork _unitOfWork;
 
         public RegisterUserService(
@@ -54,7 +54,7 @@ namespace Auth.Application.Services
                 Email = dto.Email,
                 PhoneNumber = dto.UserName,
                 NormalizedEmail = dto.Email?.ToUpper(),
-                FullName = dto.FullName,
+                FullName = string.IsNullOrWhiteSpace(dto.FullName) ? await GetRandomFullName() : dto.FullName,
                 NationalCode = dto.NationalCode,
                 CreatedAt = DateTime.Now,
                 PhoneNumberConfirmed = true
@@ -71,15 +71,68 @@ namespace Auth.Application.Services
                 {
                     await UndoUsedVerificationCode(dto);
 
-                    return result.CreateError(
-                        createUserResult.Errors.FirstOrDefault()?.Description);
+                    return result.CreateError(createUserResult?.Errors?.FirstOrDefault()?.Description ?? "خطا در ثبت کاربر");
                 }
             }
             catch (Exception ex)
             {
                 return result.CreateError(ex.Message);
             }
-        }                
+        }
+
+        public async Task<ResponseDto> QuickRegister(QuickRegisterDto dto)
+        {
+            var result = ResponseDto.Create();
+
+            if (string.IsNullOrEmpty(dto.UserName))
+            {
+                return result.CreateError("لطفا شماره همراه را وارد کنید");
+            }
+
+            if (!dto.UserName.IsValidMobile())
+            {
+                return result.CreateError("شماره همراه باید به صورت 09120000000 وارد شود");
+            }                                    
+
+            var code = await _verificationCodeService.GetByCode(dto.VerificationCode);
+            if (code == null || code.PhoneNumber != dto.UserName || !code.IsUsed || 
+                DateTime.Compare(code.UsedAt ?? default, DateTime.Now.AddMinutes(-10)) <= 0)
+            {
+                return result.CreateError("کد تایید صحیح نمی باشد");
+            }
+
+            var user = new ApplicationUser
+            {
+                UserName = dto.UserName,
+                PhoneNumber = dto.UserName,
+                FullName = await GetRandomFullName(),
+                CreatedAt = DateTime.Now,
+                PhoneNumberConfirmed = true
+            };
+
+            try
+            {
+                var createUserResult = await _userManager.CreateAsync(user);
+                if (createUserResult.Succeeded)
+                {
+                    return result.Successful("کاربر با موفقیت ثبت شد", user);
+                }
+                else
+                {                    
+                    return result.CreateError(createUserResult?.Errors?.FirstOrDefault()?.Description ?? "خطا در ثبت کاربر");
+                }
+            }
+            catch (Exception ex)
+            {
+                return result.CreateError(ex.Message);
+            }
+        }
+
+        private async Task<string> GetRandomFullName()
+        {
+            var users = await _unitOfWork.ApplicationUserRepository.GetAll();
+            return $"کاربر {users?.Count + 100}";
+        }
 
         private async Task UndoUsedVerificationCode(RegisterRequestDto dto)
         {

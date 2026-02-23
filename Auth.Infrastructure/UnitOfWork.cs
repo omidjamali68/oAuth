@@ -1,4 +1,6 @@
-﻿using Auth.Application.Services.Contracts;
+﻿using Auth.Application.Repositories.Contracts;
+using Auth.Application.Services.Contracts;
+using Auth.Infrastructure.Repositories;
 
 namespace Auth.Infrastructure
 {
@@ -10,6 +12,8 @@ namespace Auth.Infrastructure
         {
             _dataContext = dataContext;
         }
+
+        public IApplicationUserRepository ApplicationUserRepository => new ApplicationUserRepository(_dataContext);
 
         public async Task BeginAsync()
         {

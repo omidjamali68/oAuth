@@ -1,4 +1,6 @@
-﻿namespace Auth.Application.Services.Contracts
+﻿using Auth.Application.Repositories.Contracts;
+
+namespace Auth.Application.Services.Contracts
 {
     public interface IUnitOfWork
     {
@@ -7,5 +9,6 @@
         Task CommitAsync();
         void Rollback();
         Task CompleteAsync();
+        IApplicationUserRepository ApplicationUserRepository {get;}
     }
 }
