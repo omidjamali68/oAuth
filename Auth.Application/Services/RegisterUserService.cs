@@ -183,7 +183,7 @@ namespace Auth.Application.Services
 
                     return result.Successful(
                         $"{existingUser.FullName} خوش آمدید",
-                        new { FullName = existingUser.FullName, Id = existingUser.Id, Token = token });
+                        new { FullName = existingUser.FullName, Id = existingUser.Id, Token = token, RegLoginStatus = "Login" });
                 }
                 else
                 {
@@ -214,7 +214,7 @@ namespace Auth.Application.Services
 
                         return result.Successful(
                             "کاربر با موفقیت ثبت شد",
-                            new { FullName = user.FullName, Id = user.Id, Token = token });
+                            new { FullName = user.FullName, Id = user.Id, Token = token, RegLoginStatus = "Register" });
                     }
                     else
                     {
