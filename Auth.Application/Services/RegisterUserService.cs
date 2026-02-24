@@ -1,4 +1,4 @@
-﻿using Auth.Application.Common;
+using Auth.Application.Common;
 using Auth.Application.Dto;
 using Auth.Application.Services.Contracts;
 using Auth.Domain.Entities;
@@ -115,7 +115,21 @@ namespace Auth.Application.Services
                 var createUserResult = await _userManager.CreateAsync(user);
                 if (createUserResult.Succeeded)
                 {
-                    return result.Successful("کاربر با موفقیت ثبت شد", user);
+                    var tokenResult = await _authService.IssueToken(new IssueTokenRequestDto{
+                        PhoneNumber = user.PhoneNumber,
+                        UserAgent = dto.UserAgent,
+                        UserIp = dto.UserIp
+                    });
+
+                    if (!tokenResult.IsSuccess)
+                        return result.CreateError(tokenResult.Message);
+
+                    var tokenData = (dynamic)tokenResult.Data;
+                    var token = tokenData?.Token;
+
+                    return result.Successful(
+                        "کاربر با موفقیت ثبت شد", 
+                        new {FullName = user.FullName, Id = user.Id, Token = token});
                 }
                 else
                 {                    

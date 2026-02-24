@@ -12,5 +12,7 @@ namespace Auth.Application.Dto
 
         [JsonIgnore]
         public string? UserIp { get; set; }
+        [JsonIgnore]
+        public string? UserAgent { get; set; }
     }
 }

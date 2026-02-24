@@ -1,6 +1,5 @@
 ﻿using Auth.Application.Common;
 using Auth.Application.Dto;
-using Auth.Application.Repositories.Contracts;
 using Auth.Application.Services.Contracts;
 using Auth.Application.Settings;
 using Auth.Domain.Entities;
@@ -10,7 +9,6 @@ namespace Auth.Application.Services
 {
     public class AuthService : IAuthService
     {        
-        private readonly IApplicationUserRepository _userRepository;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IJwtTokenGenerator _jwtTokenGenerator;
@@ -23,7 +21,6 @@ namespace Auth.Application.Services
             UserManager<ApplicationUser> userManager,
             IJwtTokenGenerator jwtTokenGenerator,
             ISmsService smsService,
-            IApplicationUserRepository userRepository,
             IloginLoggerService loginLoggerService,
             IVerificationCodeService verificationCodeService,
             IUnitOfWork unitOfWork)
@@ -32,7 +29,6 @@ namespace Auth.Application.Services
             _userManager = userManager;
             _jwtTokenGenerator = jwtTokenGenerator;
             _smsService = smsService;
-            _userRepository = userRepository;
             _loginLoggerService = loginLoggerService;
             _verificationCodeService = verificationCodeService;
             _unitOfWork = unitOfWork;
@@ -42,7 +38,7 @@ namespace Auth.Application.Services
         {
             var result = ResponseDto.Create();
 
-            var user = await _userRepository.GetByUsername(userName);
+            var user = await _unitOfWork.ApplicationUserRepository.GetByUsername(userName);
             if (user == null)
             {
                 result.CreateError("کاربری با این نام کاربری یافت نشد");
@@ -65,7 +61,7 @@ namespace Auth.Application.Services
         {
             var result = new LoginResponseDto();
 
-            var user = await _userRepository.GetByUsername(dto.UserName);
+            var user = await _unitOfWork.ApplicationUserRepository.GetByUsername(dto.UserName);
             if (user == null)
             {
                 result.CreateError("کاربری با این نام کاربر یافت نشد");
@@ -104,7 +100,7 @@ namespace Auth.Application.Services
         {
             var result = ResponseDto.Create();
 
-            var user = await _userRepository.GetByUsername(dto.PhoneNumber);
+            var user = await _unitOfWork.ApplicationUserRepository.GetByUsername(dto.PhoneNumber);
             if (user == null)
             {
                 result.CreateError("کاربری با این نام کاربر یافت نشد");
@@ -138,7 +134,7 @@ namespace Auth.Application.Services
         {
             var result = ResponseDto.Create();
 
-            var user = await _userRepository.GetByUsername(dto.PhoneNumber);
+            var user = await _unitOfWork.ApplicationUserRepository.GetByUsername(dto.PhoneNumber);
             if (user == null)
             {
                 result.CreateError("کاربری با این نام کاربر یافت نشد");
@@ -217,7 +213,7 @@ namespace Auth.Application.Services
 
             await SaveApplicationUserVerificationCode(dto.PhoneNumber, uint.Parse(code), smsResult.Message);
 
-            var isUserRegistered = await _userRepository.IsUserExist(dto.PhoneNumber);
+            var isUserRegistered = await _unitOfWork.ApplicationUserRepository.IsUserExist(dto.PhoneNumber);
 
             return result.Successful(new {IsUserRegistered = isUserRegistered});
         }

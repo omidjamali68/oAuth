@@ -44,13 +44,12 @@ namespace Auth.Api.Controllers
         {
             dto.UserIp = _httpContextAccessor.HttpContext?.Connection?.RemoteIpAddress?
                 .MapToIPv4().ToString();
+            dto.UserAgent = Request.Headers["User-Agent"].ToString();
 
             var result = await _registerUserService.QuickRegister(dto);
 
-            if (!result.IsSuccess) 
-            {
-                return BadRequest(result);
-            }
+            if (!result.IsSuccess)             
+                return BadRequest(result);            
 
             return Ok(result);
         }
