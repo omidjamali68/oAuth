@@ -6,5 +6,6 @@ namespace Auth.Application.Services.Contracts
     {
         Task<ResponseDto> Register(RegisterRequestDto dto);
         Task<ResponseDto> QuickRegister(QuickRegisterDto dto);
+        Task<ResponseDto> RegisterOrLogin(RegisterOrLoginDto dto);
     }
 }

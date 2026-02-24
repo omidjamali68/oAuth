@@ -54,6 +54,21 @@ namespace Auth.Api.Controllers
             return Ok(result);
         }
 
+        [HttpPost("register-or-login")]
+        public async Task<IActionResult> RegisterOrLogin([FromBody] RegisterOrLoginDto dto)
+        {
+            dto.UserIp = _httpContextAccessor.HttpContext?.Connection?.RemoteIpAddress?
+                .MapToIPv4().ToString();
+            dto.UserAgent = Request.Headers["User-Agent"].ToString();
+
+            var result = await _registerUserService.RegisterOrLogin(dto);
+
+            if (!result.IsSuccess)             
+                return BadRequest(result);            
+
+            return Ok(result);
+        }
+
         [HttpPut("verify-code")]
         public async Task<IActionResult> ConfirmVerificationCode(ConfirmVerificationCodeDto dto)
         {

@@ -124,7 +124,7 @@ namespace Auth.Application.Services
                     if (!tokenResult.IsSuccess)
                         return result.CreateError(tokenResult.Message);
 
-                    var tokenData = (dynamic)tokenResult.Data;
+                    var tokenData = tokenResult.Data as dynamic;
                     var token = tokenData?.Token;
 
                     return result.Successful(
@@ -142,6 +142,92 @@ namespace Auth.Application.Services
             }
         }
 
+        public async Task<ResponseDto> RegisterOrLogin(RegisterOrLoginDto dto)
+        {
+            var result = ResponseDto.Create();
+
+            if (string.IsNullOrEmpty(dto.UserName))
+            {
+                return result.CreateError("لطفا شماره همراه را وارد کنید");
+            }
+
+            if (!dto.UserName.IsValidMobile())
+            {
+                return result.CreateError("شماره همراه باید به صورت 09120000000 وارد شود");
+            }                                    
+
+            var code = await _verificationCodeService.GetByCode(dto.VerificationCode);
+            if (code == null || code.PhoneNumber != dto.UserName || !code.IsUsed || 
+                DateTime.Compare(code.UsedAt ?? default, DateTime.Now.AddMinutes(-10)) <= 0)
+            {
+                return result.CreateError("کد تایید صحیح نمی باشد");
+            }
+
+            try
+            {
+                var existingUser = await _unitOfWork.ApplicationUserRepository.GetByUsername(dto.UserName);
+                if (existingUser != null)
+                {
+                    var tokenResult = await _authService.IssueToken(new IssueTokenRequestDto
+                    {
+                        PhoneNumber = existingUser.PhoneNumber,
+                        UserAgent = dto.UserAgent,
+                        UserIp = dto.UserIp
+                    });
+
+                    if (!tokenResult.IsSuccess)
+                        return result.CreateError(tokenResult.Message);
+
+                    var tokenData = tokenResult.Data as dynamic;
+                    var token = tokenData?.Token;
+
+                    return result.Successful(
+                        $"{existingUser.FullName} خوش آمدید",
+                        new { FullName = existingUser.FullName, Id = existingUser.Id, Token = token });
+                }
+                else
+                {
+                    var user = new ApplicationUser
+                    {
+                        UserName = dto.UserName,
+                        PhoneNumber = dto.UserName,
+                        FullName = await GetRandomFullName(),
+                        CreatedAt = DateTime.Now,
+                        PhoneNumberConfirmed = true
+                    };
+
+                    var createUserResult = await _userManager.CreateAsync(user);
+                    if (createUserResult.Succeeded)
+                    {
+                        var tokenResult = await _authService.IssueToken(new IssueTokenRequestDto
+                        {
+                            PhoneNumber = user.PhoneNumber,
+                            UserAgent = dto.UserAgent,
+                            UserIp = dto.UserIp
+                        });
+
+                        if (!tokenResult.IsSuccess)
+                            return result.CreateError(tokenResult.Message);
+
+                        var tokenData = tokenResult.Data as dynamic;
+                        var token = tokenData?.Token;
+
+                        return result.Successful(
+                            "کاربر با موفقیت ثبت شد",
+                            new { FullName = user.FullName, Id = user.Id, Token = token });
+                    }
+                    else
+                    {
+                        return result.CreateError(createUserResult?.Errors?.FirstOrDefault()?.Description ?? "خطا در ثبت کاربر");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return result.CreateError(ex.Message);
+            }
+        }
+        
         private async Task<string> GetRandomFullName()
         {
             var users = await _unitOfWork.ApplicationUserRepository.GetAll();
