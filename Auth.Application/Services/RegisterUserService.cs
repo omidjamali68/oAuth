@@ -1,4 +1,4 @@
-using Auth.Application.Common;
+﻿using Auth.Application.Common;
 using Auth.Application.Dto;
 using Auth.Application.Services.Contracts;
 using Auth.Domain.Entities;
@@ -94,11 +94,16 @@ namespace Auth.Application.Services
                 return result.CreateError("شماره همراه باید به صورت 09120000000 وارد شود");
             }                                    
 
-            var code = await _verificationCodeService.GetByCode(dto.VerificationCode);
-            if (code == null || code.PhoneNumber != dto.UserName || !code.IsUsed || 
-                DateTime.Compare(code.UsedAt ?? default, DateTime.Now.AddMinutes(-10)) <= 0)
+            var confirmCodeResult = await _authService.ConfirmVerificationCode(new ConfirmVerificationCodeDto
             {
-                return result.CreateError("کد تایید صحیح نمی باشد");
+                PhoneNumber = dto.UserName,
+                UserIp = dto.UserIp,
+                VerificationCode = dto.VerificationCode,
+            });
+
+            if (confirmCodeResult.IsSuccess == false)
+            {
+                return confirmCodeResult;
             }
 
             var user = new ApplicationUser
@@ -156,11 +161,16 @@ namespace Auth.Application.Services
                 return result.CreateError("شماره همراه باید به صورت 09120000000 وارد شود");
             }                                    
 
-            var code = await _verificationCodeService.GetByCode(dto.VerificationCode);
-            if (code == null || code.PhoneNumber != dto.UserName || !code.IsUsed || 
-                DateTime.Compare(code.UsedAt ?? default, DateTime.Now.AddMinutes(-10)) <= 0)
+            var confirmCodeResult = await _authService.ConfirmVerificationCode(new ConfirmVerificationCodeDto
             {
-                return result.CreateError("کد تایید صحیح نمی باشد");
+                PhoneNumber = dto.UserName,
+                UserIp = dto.UserIp,
+                VerificationCode = dto.VerificationCode,
+            });
+
+            if (confirmCodeResult.IsSuccess == false)
+            {
+                return confirmCodeResult;
             }
 
             try
