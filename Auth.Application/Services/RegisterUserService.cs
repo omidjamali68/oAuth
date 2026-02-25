@@ -170,7 +170,7 @@ namespace Auth.Application.Services
                 {
                     var tokenResult = await _authService.IssueToken(new IssueTokenRequestDto
                     {
-                        PhoneNumber = existingUser.PhoneNumber,
+                        PhoneNumber = existingUser.PhoneNumber ?? string.Empty,
                         UserAgent = dto.UserAgent,
                         UserIp = dto.UserIp
                     });

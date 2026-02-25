@@ -1,4 +1,4 @@
-﻿using Auth.Application.Dto;
+using Auth.Application.Dto;
 using Auth.Application.Services.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,16 +11,22 @@ namespace Auth.Api.Controllers
     {
         private readonly IAuthService _authService;
         private readonly IRegisterUserService _registerUserService;
+        private readonly IApplicationUserService _applicationUserService;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IConfiguration _configuration;
 
         public AuthApiController(
-            IAuthService authService, IHttpContextAccessor httpContextAccessor, IRegisterUserService registerUserService, IConfiguration configuration)
+            IAuthService authService,
+            IHttpContextAccessor httpContextAccessor,
+            IRegisterUserService registerUserService,
+            IConfiguration configuration,
+            IApplicationUserService applicationUserService)
         {
             _authService = authService;
             _httpContextAccessor = httpContextAccessor;
             _registerUserService = registerUserService;
             _configuration = configuration;
+            _applicationUserService = applicationUserService;
         }
 
         [HttpPost("register")]
@@ -76,6 +82,20 @@ namespace Auth.Api.Controllers
                 .MapToIPv4().ToString();
 
             var result = await _authService.ConfirmVerificationCode(dto);
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+
+        [HttpPut("complete-user-info")]
+        [Authorize]
+        public async Task<IActionResult> CompleteUserInfo([FromBody] CompleteUserInfoDto dto)
+        {
+            var result = await _applicationUserService.CompleteUserInfo(dto);
 
             if (!result.IsSuccess)
             {

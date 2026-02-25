@@ -1,4 +1,4 @@
-﻿using Auth.Application.Services;
+using Auth.Application.Services;
 using Auth.Application.Services.Contracts;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -13,6 +13,7 @@ namespace Auth.Application
             services.AddScoped<IloginLoggerService, LoginLoggerService>();
             services.AddScoped<IVerificationCodeService, VerificationCodeService>();
             services.AddScoped<IRegisterUserService, RegisterUserService>();
+            services.AddScoped<IApplicationUserService, ApplicationUserService>();
 
             return services;
         }

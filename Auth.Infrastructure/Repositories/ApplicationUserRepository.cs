@@ -1,4 +1,4 @@
-﻿using Auth.Application.Repositories.Contracts;
+using Auth.Application.Repositories.Contracts;
 using Auth.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,6 +26,11 @@ namespace Auth.Infrastructure.Repositories
         public async Task<bool> IsUserExist(string username) 
         {
             return await _db.ApplicationUsers.AnyAsync(x => x.UserName == username);
+        }
+
+        public async Task<ApplicationUser?> GetById(string id)
+        {
+            return await _db.ApplicationUsers.FirstOrDefaultAsync(x => x.Id == id);
         }
     }
 }

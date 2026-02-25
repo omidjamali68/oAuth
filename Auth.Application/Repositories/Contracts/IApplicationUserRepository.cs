@@ -1,4 +1,4 @@
-﻿using Auth.Domain.Entities;
+using Auth.Domain.Entities;
 
 namespace Auth.Application.Repositories.Contracts
 {
@@ -7,5 +7,6 @@ namespace Auth.Application.Repositories.Contracts
         Task<List<ApplicationUser>?> GetAll();
         Task<ApplicationUser?> GetByUsername(string username);
         Task<bool> IsUserExist(string username);
+        Task<ApplicationUser?> GetById(string id);
     }
 }
