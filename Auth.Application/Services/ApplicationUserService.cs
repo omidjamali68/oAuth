@@ -60,6 +60,12 @@ namespace Auth.Application.Services
 
             if (!string.IsNullOrWhiteSpace(dto.Password))
             {
+                if (string.IsNullOrEmpty(dto.ConfirmPassword))
+                    return result.CreateError("لطفا تاییدیه کلمه عبور را وارد کنید");
+
+                if (dto.Password.ToLower() != dto.ConfirmPassword.ToLower())
+                    return result.CreateError("کلمه عبور و تاییدیه آن یکسان نیست");
+
                 var hasPassword = await _userManager.HasPasswordAsync(user);
 
                 if (hasPassword)
