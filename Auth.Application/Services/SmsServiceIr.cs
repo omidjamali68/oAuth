@@ -29,7 +29,7 @@ namespace Auth.Application.Services
                 if (!string.IsNullOrWhiteSpace(developerNumber) &&
                     string.Equals(normalizedMobile, developerNumber, StringComparison.OrdinalIgnoreCase))
                 {
-                    return result.Successful("ارسال پیامک برای شماره توسعه‌دهنده غیرفعال است و فقط در دیتابیس ثبت شد");
+                    return result.Successful("ارسال پیامک برای این شماره غیرفعال است و فقط در دیتابیس ثبت شد");
                 }
 
                 string apiKey = _smsSetting.ApiKey;
