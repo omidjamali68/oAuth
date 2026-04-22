@@ -1,10 +1,11 @@
-﻿namespace Auth.Application.Settings
+namespace Auth.Application.Settings
 {
     public class IrSmsSetting
     {
         public string ApiKey { get; set; } = string.Empty;
         public string Number { get; set; } = string.Empty;
         public string LoginPaternCode { get; set; } = string.Empty;
+        public string SkipNumber { get; set; } = string.Empty;
     }
 
     public class SmsParams

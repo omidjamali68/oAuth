@@ -1,4 +1,4 @@
-﻿using Auth.Application.Dto;
+using Auth.Application.Dto;
 using Auth.Application.Services.Contracts;
 using Auth.Application.Settings;
 using IPE.SmsIrClient;
@@ -24,13 +24,21 @@ namespace Auth.Application.Services
             var result = ResponseDto.Create();
             try
             {
+                var normalizedMobile = (mobile ?? string.Empty).Trim();
+                var developerNumber = (_smsSetting.SkipNumber ?? string.Empty).Trim();
+                if (!string.IsNullOrWhiteSpace(developerNumber) &&
+                    string.Equals(normalizedMobile, developerNumber, StringComparison.OrdinalIgnoreCase))
+                {
+                    return result.Successful("ارسال پیامک برای شماره توسعه‌دهنده غیرفعال است و فقط در دیتابیس ثبت شد");
+                }
+
                 string apiKey = _smsSetting.ApiKey;
                 string number = _smsSetting.Number;
                 int templateId = int.Parse(_smsSetting.LoginPaternCode);
                 SmsIr smsIr = new SmsIr(apiKey);
                 List<VerifySendParameter> pms = new List<VerifySendParameter>();
                 parameters.ForEach(x => pms.Add(new(x.Key, x.Value)));
-                var verificationSendResult = await smsIr.VerifySendAsync(mobile, templateId, pms.ToArray());
+                var verificationSendResult = await smsIr.VerifySendAsync(normalizedMobile, templateId, pms.ToArray());
                 if (verificationSendResult.Status == 1)
                 {
                     result.Successful("پیامک ارسال شد");
