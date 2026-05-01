@@ -9,7 +9,7 @@ services:
       HttpsRedirection__Enabled: "false"
 
       # برای ساده‌سازی (بدون .env) اتصال API به SQL کانتینری به صورت پیش‌فرض فعال است:
-      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=AuthDb;User Id=sa;Password=TebData_Sql123!;TrustServerCertificate=True"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1436;Database=AuthDb;User Id=sa;Password=oAuth_Sql123!;TrustServerCertificate=True"
 
     ports:
       - "5000:8080"
@@ -23,9 +23,9 @@ services:
       ACCEPT_EULA: "Y"
       MSSQL_PID: "Express"
       # پسورد باید سیاست SQL Server را پاس کند (حروف بزرگ/کوچک + عدد + کاراکتر خاص)
-      SA_PASSWORD: "TebData_Sql123!"
+      SA_PASSWORD: "oAuth_Sql123!"
     ports:
-      - "1435:1433"
+      - "1436:1433"
     volumes:
       - tebdata-sql-data:/var/opt/mssql
 
@@ -39,11 +39,11 @@ services:
       - -lc
       - |
         set -e
-        until /opt/mssql-tools/bin/sqlcmd -S sqlserver -U sa -P "TebData_Sql123!" -Q "SELECT 1" >/dev/null 2>&1; do
+        until /opt/mssql-tools/bin/sqlcmd -S sqlserver -U sa -P "oAuth_Sql123!" -Q "SELECT 1" >/dev/null 2>&1; do
           echo "Waiting for SQL Server..."
           sleep 2
         done
-        /opt/mssql-tools/bin/sqlcmd -S sqlserver -U sa -P "TebData_Sql123!" -Q "IF DB_ID(N'AuthDb') IS NULL BEGIN CREATE DATABASE [AuthDb]; END"
+        /opt/mssql-tools/bin/sqlcmd -S sqlserver -U sa -P "oAuth_Sql123!" -Q "IF DB_ID(N'AuthDb') IS NULL BEGIN CREATE DATABASE [AuthDb]; END"
         echo "Database AuthDb is ready."
     restart: "no"
 

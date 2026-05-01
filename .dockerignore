@@ -1,0 +1,15 @@
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+**/*.user
+**/*.suo
+**/*.log
+**/*.vspscc
+**/*.vssscc
+.git
+.gitignore
+build-output.txt
+build-output-utf8.txt
+build-output*.txt
+docker-compose.override.yml
