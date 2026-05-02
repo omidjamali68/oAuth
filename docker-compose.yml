@@ -9,13 +9,15 @@ services:
       HttpsRedirection__Enabled: "false"
 
       # برای ساده‌سازی (بدون .env) اتصال API به SQL کانتینری به صورت پیش‌فرض فعال است:
-      ConnectionStrings__DefaultConnection: "Server=sqlserver,1436;Database=AuthDb;User Id=sa;Password=oAuth_Sql123!;TrustServerCertificate=True"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=AuthDb;User Id=sa;Password=oAuth_Sql123!;TrustServerCertificate=True"
 
     ports:
       - "5000:8080"
     depends_on:
-      - sqlserver
-      - sqlserver-init-authDb
+      sqlserver:
+        condition: service_healthy
+      sqlserver-init-authDb:
+        condition: service_completed_successfully
 
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -28,12 +30,19 @@ services:
       - "1436:1433"
     volumes:
       - tebdata-sql-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD", "timeout", "5", "bash", "-c", "echo > /dev/tcp/localhost/1433"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   # یک‌بار بعد از بالا آمدن SQL Server اجرا می‌شود و دیتابیس را می‌سازد (اگر وجود نداشت)
   sqlserver-init-authDb:
     image: mcr.microsoft.com/mssql-tools:latest
     depends_on:
-      - sqlserver
+      sqlserver:
+        condition: service_healthy
     command:
       - /bin/bash
       - -lc
