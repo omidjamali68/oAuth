@@ -4,13 +4,7 @@ services:
       context: .
       dockerfile: Auth.Api/Dockerfile
     image: auth-api:local
-    environment:
-      ASPNETCORE_ENVIRONMENT: Development
-      HttpsRedirection__Enabled: "false"
-
-      # برای ساده‌سازی (بدون .env) اتصال API به SQL کانتینری به صورت پیش‌فرض فعال است:
-      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=AuthDb;User Id=sa;Password=oAuth_Sql123!;TrustServerCertificate=True"
-
+    env_file: .env
     ports:
       - "5000:8080"
     depends_on:
@@ -21,11 +15,7 @@ services:
 
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
-    environment:
-      ACCEPT_EULA: "Y"
-      MSSQL_PID: "Express"
-      # پسورد باید سیاست SQL Server را پاس کند (حروف بزرگ/کوچک + عدد + کاراکتر خاص)
-      SA_PASSWORD: "oAuth_Sql123!"
+    env_file: .env
     ports:
       - "1436:1433"
     volumes:
@@ -40,6 +30,7 @@ services:
   # یک‌بار بعد از بالا آمدن SQL Server اجرا می‌شود و دیتابیس را می‌سازد (اگر وجود نداشت)
   sqlserver-init-authDb:
     image: mcr.microsoft.com/mssql-tools:latest
+    env_file: .env
     depends_on:
       sqlserver:
         condition: service_healthy
@@ -48,11 +39,11 @@ services:
       - -lc
       - |
         set -e
-        until /opt/mssql-tools/bin/sqlcmd -S sqlserver -U sa -P "oAuth_Sql123!" -Q "SELECT 1" >/dev/null 2>&1; do
+        until /opt/mssql-tools/bin/sqlcmd -S sqlserver -U sa -P "$SA_PASSWORD" -Q "SELECT 1" >/dev/null 2>&1; do
           echo "Waiting for SQL Server..."
           sleep 2
         done
-        /opt/mssql-tools/bin/sqlcmd -S sqlserver -U sa -P "oAuth_Sql123!" -Q "IF DB_ID(N'AuthDb') IS NULL BEGIN CREATE DATABASE [AuthDb]; END"
+        /opt/mssql-tools/bin/sqlcmd -S sqlserver -U sa -P "$SA_PASSWORD" -Q "IF DB_ID(N'AuthDb') IS NULL BEGIN CREATE DATABASE [AuthDb]; END"
         echo "Database AuthDb is ready."
     restart: "no"
 
