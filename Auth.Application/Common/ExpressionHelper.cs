@@ -20,25 +20,33 @@ namespace Auth.Application.Common
             }
         }
 
-        public static string RandomInt(this string i, int maxSize)
+        public static string RandomInt(this string i, int size)
         {
-            char[] chars;
-            { chars = "1234567890".ToCharArray(); }
+            if (size <= 0)
             {
-                byte[] data = new byte[1];
-                using (RNGCryptoServiceProvider crypto = new RNGCryptoServiceProvider())
-                {
-                    crypto.GetNonZeroBytes(data);
-                    data = new byte[maxSize];
-                    crypto.GetNonZeroBytes(data);
-                }
-                StringBuilder result = new StringBuilder(maxSize);
-                foreach (byte b in data)
-                {
-                    result.Append(chars[b % chars.Length]);
-                }
-                return result.ToString();
+                throw new ArgumentOutOfRangeException(nameof(size), "Size must be a positive integer.");
             }
+
+            const string firstChars = "123456789";
+            const string otherChars = "0123456789";
+
+            using var crypto = RandomNumberGenerator.Create();
+            var result = new char[size];
+
+            result[0] = firstChars[GetRandomInt(crypto, firstChars.Length)];
+            for (int index = 1; index < size; index++)
+            {
+                result[index] = otherChars[GetRandomInt(crypto, otherChars.Length)];
+            }
+
+            return new string(result);
+        }
+
+        private static int GetRandomInt(RandomNumberGenerator rng, int maxValue)
+        {
+            var data = new byte[4];
+            rng.GetBytes(data);
+            return (int)(BitConverter.ToUInt32(data, 0) % maxValue);
         }
     }
 }
